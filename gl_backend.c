@@ -8,6 +8,14 @@ extern LPDIRECT3DDEVICE9 vid_d3d9dev;
 extern D3DCAPS9 vid_d3d9caps;
 #endif
 
+
+#ifdef __ANDROID__
+int android_reset_vertex = 0;
+int android_reset_color  = 0;
+int android_reset_tex    = 0;
+#endif
+
+
 // on GLES we have to use some proper #define's
 #ifndef GL_FRAMEBUFFER
 #define GL_FRAMEBUFFER                                   0x8D40
@@ -108,7 +116,7 @@ cvar_t r_renderview = {0, "r_renderview", "1", "enables rendering 3D views (you 
 cvar_t r_waterwarp = {CVAR_SAVE, "r_waterwarp", "1", "warp view while underwater"};
 cvar_t gl_polyblend = {CVAR_SAVE, "gl_polyblend", "1", "tints view while underwater, hurt, etc"};
 cvar_t gl_dither = {CVAR_SAVE, "gl_dither", "1", "enables OpenGL dithering (16bit looks bad with this off)"};
-cvar_t gl_vbo = {CVAR_SAVE, "gl_vbo", "3", "make use of GL_ARB_vertex_buffer_object extension to store static geometry in video memory for faster rendering, 0 disables VBO allocation or use, 1 enables VBOs for vertex and triangle data, 2 only for vertex data, 3 for vertex data and triangle data of simple meshes (ones with only one surface)"};
+cvar_t gl_vbo = {CVAR_SAVE, "gl_vbo", "0", "make use of GL_ARB_vertex_buffer_object extension to store static geometry in video memory for faster rendering, 0 disables VBO allocation or use, 1 enables VBOs for vertex and triangle data, 2 only for vertex data, 3 for vertex data and triangle data of simple meshes (ones with only one surface)"};
 cvar_t gl_vbo_dynamicvertex = {CVAR_SAVE, "gl_vbo_dynamicvertex", "0", "make use of GL_ARB_vertex_buffer_object extension when rendering dynamic (animated/procedural) geometry such as text and particles"};
 cvar_t gl_vbo_dynamicindex = {CVAR_SAVE, "gl_vbo_dynamicindex", "0", "make use of GL_ARB_vertex_buffer_object extension when rendering dynamic (animated/procedural) geometry such as text and particles"};
 cvar_t gl_fbo = {CVAR_SAVE, "gl_fbo", "1", "make use of GL_ARB_framebuffer_object extension to enable shadowmaps and other features using pixel formats different from the framebuffer"};
@@ -1156,6 +1164,9 @@ void R_Viewport_InitRectSideView(r_viewport_t *v, const matrix4x4_t *cameramatri
 
 void R_SetViewport(const r_viewport_t *v)
 {
+#ifdef __ANDROID__
+    R_ResetProgram();
+#endif
 	gl_viewport = *v;
 
 	// FIXME: v_flipped_state is evil, this probably breaks somewhere
@@ -1223,7 +1234,11 @@ void R_GetViewport(r_viewport_t *v)
 	*v = gl_viewport;
 }
 
+#ifdef __ANDROID__
+void GL_BindVBO(int bufferobject)
+#else
 static void GL_BindVBO(int bufferobject)
+#endif
 {
 	if (gl_state.vertexbufferobject != bufferobject)
 	{
@@ -1232,8 +1247,11 @@ static void GL_BindVBO(int bufferobject)
 		qglBindBufferARB(GL_ARRAY_BUFFER, bufferobject);CHECKGLERROR
 	}
 }
-
+#ifdef __ANDROID__
+void GL_BindEBO(int bufferobject)
+#else
 static void GL_BindEBO(int bufferobject)
+#endif
 {
 	if (gl_state.elementbufferobject != bufferobject)
 	{
@@ -1242,8 +1260,11 @@ static void GL_BindEBO(int bufferobject)
 		qglBindBufferARB(GL_ELEMENT_ARRAY_BUFFER, bufferobject);CHECKGLERROR
 	}
 }
-
+#ifdef __ANDROID__
+void GL_BindUBO(int bufferobject)
+#else
 static void GL_BindUBO(int bufferobject)
+#endif
 {
 	if (gl_state.uniformbufferobject != bufferobject)
 	{
@@ -3560,8 +3581,9 @@ void R_Mesh_VertexPointer(int components, int gltype, size_t stride, const void 
 		break;
 	case RENDERPATH_GL20:
 	case RENDERPATH_GLES2:
-		if (gl_state.pointer_vertex_components != components || gl_state.pointer_vertex_gltype != gltype || gl_state.pointer_vertex_stride != stride || gl_state.pointer_vertex_pointer != pointer || gl_state.pointer_vertex_vertexbuffer != vertexbuffer || gl_state.pointer_vertex_offset != bufferoffset)
+		if (android_reset_vertex || gl_state.pointer_vertex_components != components || gl_state.pointer_vertex_gltype != gltype || gl_state.pointer_vertex_stride != stride || gl_state.pointer_vertex_pointer != pointer || gl_state.pointer_vertex_vertexbuffer != vertexbuffer || gl_state.pointer_vertex_offset != bufferoffset)
 		{
+		    android_reset_vertex = 0;
 			int bufferobject = vertexbuffer ? vertexbuffer->bufferobject : 0;
 			gl_state.pointer_vertex_components = components;
 			gl_state.pointer_vertex_gltype = gltype;
@@ -3644,8 +3666,9 @@ void R_Mesh_ColorPointer(int components, int gltype, size_t stride, const void *
 				CHECKGLERROR
 				qglEnableVertexAttribArray(GLSLATTRIB_COLOR);CHECKGLERROR
 			}
-			if (gl_state.pointer_color_components != components || gl_state.pointer_color_gltype != gltype || gl_state.pointer_color_stride != stride || gl_state.pointer_color_pointer != pointer || gl_state.pointer_color_vertexbuffer != vertexbuffer || gl_state.pointer_color_offset != bufferoffset)
+			if (android_reset_color || gl_state.pointer_color_components != components || gl_state.pointer_color_gltype != gltype || gl_state.pointer_color_stride != stride || gl_state.pointer_color_pointer != pointer || gl_state.pointer_color_vertexbuffer != vertexbuffer || gl_state.pointer_color_offset != bufferoffset)
 			{
+			    android_reset_color = 0;
 				gl_state.pointer_color_components = components;
 				gl_state.pointer_color_gltype = gltype;
 				gl_state.pointer_color_stride = stride;
@@ -3741,8 +3764,9 @@ void R_Mesh_TexCoordPointer(unsigned int unitnum, int components, int gltype, si
 				qglEnableVertexAttribArray(unitnum+GLSLATTRIB_TEXCOORD0);CHECKGLERROR
 			}
 			// texcoord array
-			if (unit->pointer_texcoord_components != components || unit->pointer_texcoord_gltype != gltype || unit->pointer_texcoord_stride != stride || unit->pointer_texcoord_pointer != pointer || unit->pointer_texcoord_vertexbuffer != vertexbuffer || unit->pointer_texcoord_offset != bufferoffset)
+			if (android_reset_tex || unit->pointer_texcoord_components != components || unit->pointer_texcoord_gltype != gltype || unit->pointer_texcoord_stride != stride || unit->pointer_texcoord_pointer != pointer || unit->pointer_texcoord_vertexbuffer != vertexbuffer || unit->pointer_texcoord_offset != bufferoffset)
 			{
+			    android_reset_tex = 0;
 				unit->pointer_texcoord_components = components;
 				unit->pointer_texcoord_gltype = gltype;
 				unit->pointer_texcoord_stride = stride;

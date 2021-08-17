@@ -93,6 +93,10 @@ static void Buffer_Callback (void *userdata, Uint8 *stream, int len)
 	}
 }
 
+#ifdef __ANDROID__
+extern int AUDIO_OVERRIDE_FREQ;
+extern int AUDIO_OVERRIDE_SAMPLES;
+#endif
 
 /*
 ====================
@@ -128,6 +132,12 @@ qboolean SndSys_Init (const snd_format_t* fmt, snd_format_t* suggested)
 	wantspec.format = fmt->width == 1 ? AUDIO_U8 : AUDIO_S16SYS;
 	wantspec.channels = fmt->channels;
 	wantspec.samples = CeilPowerOf2(buffersize);  // needs to be a power of 2 on some platforms.
+
+#ifdef __ANDROID__
+    if (AUDIO_OVERRIDE_SAMPLES != 0)
+       wantspec.samples = AUDIO_OVERRIDE_SAMPLES;
+#endif
+
 
 	Con_Printf("Wanted audio Specification:\n"
 				"\tChannels  : %i\n"

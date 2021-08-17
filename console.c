@@ -1119,6 +1119,9 @@ static char Sys_Con_NearestColor(const unsigned char _r, const unsigned char _g,
 		return '1';
 }
 
+#ifdef __ANDROID__
+#include "LogWritter.h"
+#endif
 /*
 ================
 Con_MaskPrint
@@ -1132,7 +1135,10 @@ void Con_MaskPrint(int additionalmask, const char *msg)
 	static int mask = 0;
 	static int index = 0;
 	static char line[MAX_INPUTLINE];
-
+#ifdef __ANDROID__
+    LOGI("darkplaces: %s",msg);
+    LogWritter_Write(msg);
+#endif
 	if (con_mutex)
 		Thread_LockMutex(con_mutex);
 

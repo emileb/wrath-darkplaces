@@ -157,6 +157,8 @@ qboolean PNG_OpenLibrary (void)
 		"libpng15.15.dylib",
 		"libpng14.14.dylib",
 		"libpng12.0.dylib",
+#elif defined(__ANDROID__)
+        "libpng_shared.so",
 #else
 		"libpng16.so.16",
 		"libpng15.so.15", // WTF libtool guidelines anyone?
@@ -288,7 +290,7 @@ static void PNG_error_fn(void *png, const char *message)
 
 static void PNG_warning_fn(void *png, const char *message)
 {
-	Con_Printf("PNG_LoadImage: warning: %s\n", message);
+	//Con_Printf("PNG_LoadImage: warning: %s\n", message);
 }
 
 unsigned char *PNG_LoadImage_BGRA (const unsigned char *raw, int filesize, int *miplevel)

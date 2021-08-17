@@ -90,6 +90,15 @@ static void FindNextChunk(const char *name)
 			data_p = NULL;
 			return;
 		}
+#ifdef __ANDROID__
+		// Check iff_chunk_len isn't so corrupted it's overflowed
+        if (data_p + iff_chunk_len < iff_data)
+        {
+            // truncated chunk!
+            data_p = NULL;
+            return;
+        }
+#endif
 		data_p -= 8;
 		last_chunk = data_p + 8 + ( (iff_chunk_len + 1) & ~1 );
 		if (!strncmp((const char *)data_p, name, 4))

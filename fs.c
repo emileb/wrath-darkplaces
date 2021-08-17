@@ -355,6 +355,9 @@ char fs_gamedir[MAX_OSPATH];
 char fs_basedir[MAX_OSPATH];
 static pack_t *fs_selfpack = NULL;
 
+#ifdef __ANDROID__
+char fs_cddir[MAX_OSPATH];
+#endif
 // list of active game directories (empty if not running a mod)
 int fs_numgamedirs = 0;
 char fs_gamedirs[MAX_GAMEDIRS][MAX_QPATH];
@@ -1251,6 +1254,11 @@ FS_AddGameHierarchy
 static void FS_AddGameHierarchy (const char *dir)
 {
 	char vabuf[1024];
+
+#ifdef __ANDROID__
+    if(*fs_cddir)
+        FS_AddGameDirectory(va(vabuf, sizeof(vabuf), "%s%s/", fs_cddir, dir));
+#endif
 	// Add the common game directory
 	FS_AddGameDirectory (va(vabuf, sizeof(vabuf), "%s%s/", fs_basedir, dir));
 
@@ -1994,7 +2002,10 @@ void FS_Init (void)
 	// add a path separator to the end of the basedir if it lacks one
 	if (fs_basedir[0] && fs_basedir[strlen(fs_basedir) - 1] != '/' && fs_basedir[strlen(fs_basedir) - 1] != '\\')
 		strlcat(fs_basedir, "/", sizeof(fs_basedir));
-
+#ifdef __ANDROID__
+	if((i = COM_CheckParm("-cddir")) && i < com_argc - 1)
+		dpsnprintf(fs_cddir, sizeof(fs_cddir), "%s/", com_argv[i+1]);
+#endif
 	// Add the personal game directory
 	if((i = COM_CheckParm("-userdir")) && i < com_argc - 1)
 		dpsnprintf(fs_userdir, sizeof(fs_userdir), "%s/", com_argv[i+1]);

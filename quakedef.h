@@ -44,6 +44,13 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
 
 #include "qtypes.h"
 
+#ifdef __ANDROID__
+#include <android/log.h>
+#define LOGI(...) ((void)__android_log_print(ANDROID_LOG_INFO,"DP", __VA_ARGS__))
+#define LOGW(...) ((void)__android_log_print(ANDROID_LOG_WARN, "DP", __VA_ARGS__))
+#define LOGE(...) ((void)__android_log_print(ANDROID_LOG_ERROR,"DP", __VA_ARGS__))
+#endif
+
 extern const char *buildstring;
 extern char engineversion[128];
 
@@ -423,6 +430,7 @@ extern cvar_t sessionid;
 # define DP_OS_NAME		"Android"
 # define DP_OS_STR		"android"
 # define USE_GLES2		1
+# define USE_RWOPS		0
 # define LINK_TO_ZLIB	1
 # define LINK_TO_LIBVORBIS 1
 # define DP_MOBILETOUCH	1

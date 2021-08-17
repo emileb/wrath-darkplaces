@@ -1903,7 +1903,9 @@ static int NetConn_ClientParsePacket(lhnetsocket_t *mysocket, unsigned char *dat
 			// update the server IP in the userinfo (QW servers expect this, and it is used by the reconnect command)
 			InfoString_SetValue(cls.userinfo, sizeof(cls.userinfo), "*ip", addressstring2);
 			// TODO: add userinfo stuff here instead of using NQ commands?
-			NetConn_WriteString(mysocket, va(vabuf, sizeof(vabuf), "\377\377\377\377connect\\protocol\\darkplaces 3\\protocols\\%s%s\\challenge\\%s", protocolnames, cls.connect_userinfo, string + 10), peeraddress);
+			memcpy(senddata, "\377\377\377\377", 4);
+			dpsnprintf(senddata+4, sizeof(senddata)-4, "connect\\protocol\\darkplaces 3\\protocols\\%s%s\\challenge\\%s", protocolnames, cls.connect_userinfo, string + 10);
+			NetConn_WriteString(mysocket, senddata, peeraddress);
 			return true;
 		}
 		if (length == 6 && !memcmp(string, "accept", 6) && cls.connect_trying)
@@ -2095,7 +2097,9 @@ static int NetConn_ClientParsePacket(lhnetsocket_t *mysocket, unsigned char *dat
 			cls.qw_qport = qport.integer;
 			// update the server IP in the userinfo (QW servers expect this, and it is used by the reconnect command)
 			InfoString_SetValue(cls.userinfo, sizeof(cls.userinfo), "*ip", addressstring2);
-			NetConn_WriteString(mysocket, va(vabuf, sizeof(vabuf), "\377\377\377\377connect %i %i %i \"%s%s\"\n", 28, cls.qw_qport, atoi(string + 1), cls.userinfo, cls.connect_userinfo), peeraddress);
+			memcpy(senddata, "\377\377\377\377", 4);
+			dpsnprintf(senddata+4, sizeof(senddata)-4, "connect %i %i %i \"%s%s\"\n", 28, cls.qw_qport, atoi(string + 1), cls.userinfo, cls.connect_userinfo);
+			NetConn_WriteString(mysocket, senddata, peeraddress);
 			return true;
 		}
 		if (length >= 1 && string[0] == 'j' && cls.connect_trying)
@@ -2970,7 +2974,8 @@ static int NetConn_ServerParsePacket(lhnetsocket_t *mysocket, unsigned char *dat
 			}
 			challenge[i].time = realtime;
 			// send the challenge
-			dpsnprintf(response, sizeof(response), "\377\377\377\377challenge %s", challenge[i].string);
+			memcpy(response, "\377\377\377\377", 4);
+			dpsnprintf(response+4, sizeof(response)-4, "challenge %s", challenge[i].string);
 			response_len = strlen(response) + 1;
 			Crypto_ServerAppendToChallenge(string, length, response, &response_len, sizeof(response));
 			NetConn_Write(mysocket, response, response_len, peeraddress);
@@ -3019,7 +3024,9 @@ static int NetConn_ServerParsePacket(lhnetsocket_t *mysocket, unsigned char *dat
 			{
 				if (developer_extra.integer)
 					Con_Printf("Datagram_ParseConnectionless: sending \"reject %s\" to %s.\n", sv_public_rejectreason.string, addressstring2);
-				NetConn_WriteString(mysocket, va(vabuf, sizeof(vabuf), "\377\377\377\377reject %s", sv_public_rejectreason.string), peeraddress);
+				memcpy(response, "\377\377\377\377", 4);
+				dpsnprintf(response+4, sizeof(response)-4, "reject %s", sv_public_rejectreason.string);
+				NetConn_WriteString(mysocket, response, peeraddress);
 				return true;
 			}
 
@@ -3607,7 +3614,8 @@ void NetConn_QueryMasters(qboolean querydp, qboolean queryqw)
 					cmdname = "getservers";
 					extraoptions = "";
 				}
-				dpsnprintf(request, sizeof(request), "\377\377\377\377%s %s %u empty full%s", cmdname, gamenetworkfiltername, NET_PROTOCOL_VERSION, extraoptions);
+				memcpy(request, "\377\377\377\377", 4);
+				dpsnprintf(request+4, sizeof(request)-4, "%s %s %u empty full%s", cmdname, gamenetworkfiltername, NET_PROTOCOL_VERSION, extraoptions);
 
 				// search internet
 				for (masternum = 0;sv_masters[masternum].name;masternum++)

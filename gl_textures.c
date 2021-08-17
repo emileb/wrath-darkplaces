@@ -36,7 +36,11 @@ cvar_t gl_texturecompression_sky = {CVAR_SAVE, "gl_texturecompression_sky", "0",
 cvar_t gl_texturecompression_lightcubemaps = {CVAR_SAVE, "gl_texturecompression_lightcubemaps", "1", "whether to compress light cubemaps (spotlights and other light projection images)"};
 cvar_t gl_texturecompression_reflectmask = {CVAR_SAVE, "gl_texturecompression_reflectmask", "1", "whether to compress reflection cubemap masks (mask of which areas of the texture should reflect the generic shiny cubemap)"};
 cvar_t gl_texturecompression_sprites = {CVAR_SAVE, "gl_texturecompression_sprites", "1", "whether to compress sprites"};
+#ifdef __ANDROID__
+cvar_t gl_nopartialtextureupdates = {CVAR_SAVE, "gl_nopartialtextureupdates", "1", "use alternate path for dynamic lightmap updates that avoids a possibly slow code path in the driver"};
+#else
 cvar_t gl_nopartialtextureupdates = {CVAR_SAVE, "gl_nopartialtextureupdates", "0", "use alternate path for dynamic lightmap updates that avoids a possibly slow code path in the driver"};
+#endif
 cvar_t r_texture_dds_load_alphamode = {0, "r_texture_dds_load_alphamode", "1", "0: trust DDPF_ALPHAPIXELS flag, 1: texture format and brute force search if ambiguous, 2: texture format only"};
 cvar_t r_texture_dds_load_logfailure = {0, "r_texture_dds_load_logfailure", "0", "log missing DDS textures to ddstexturefailures.log, 0: done log, 1: log with no optional textures (_norm, glow etc.). 2: log all"};
 cvar_t r_texture_dds_swdecode = {0, "r_texture_dds_swdecode", "0", "0: don't software decode DDS, 1: software decode DDS if unsupported, 2: always software decode DDS"};
@@ -86,6 +90,11 @@ textypeinfo_t;
 #define GL_BGR					0x80E0
 #define GL_BGRA					0x80E1
 
+#ifdef __ANDROID__
+#define GL_RGBA16F GL_RGB565
+#define GL_RGBA32F GL_RGB565
+#define GL_HALF_FLOAT_ARB GL_UNSIGNED_SHORT_5_6_5
+#endif
 // framebuffer texture formats
 // GLES2 devices rarely support depth textures, so we actually use a renderbuffer there
 static textypeinfo_t textype_shadowmap16_comp            = {"shadowmap16_comp",         TEXTYPE_SHADOWMAP16_COMP     ,  2,  2,  2.0f, GL_DEPTH_COMPONENT16              , GL_DEPTH_COMPONENT, GL_UNSIGNED_SHORT};
@@ -1044,8 +1053,9 @@ void R_Textures_Frame (void)
 						oldbindtexnum = R_Mesh_TexBound(0, gltexturetypeenums[glt->texturetype]);
 
 						qglBindTexture(gltexturetypeenums[glt->texturetype], glt->texnum);CHECKGLERROR
+#ifndef __ANDROID__
 						qglTexParameteri(gltexturetypeenums[glt->texturetype], GL_TEXTURE_MAX_ANISOTROPY_EXT, old_aniso);CHECKGLERROR
-
+#endif
 						qglBindTexture(gltexturetypeenums[glt->texturetype], oldbindtexnum);CHECKGLERROR
 					}
 				}

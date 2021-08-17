@@ -2717,6 +2717,11 @@ static void M_Keys_Key (int k, int ascii)
 	int		keys[NUMKEYS];
 	char	tinystr[2];
 
+#ifdef __ANDROID__
+	if(k == K_TEXT)
+		return;
+#endif
+
 	if (bind_grab)
 	{	// defining a key
 		S_LocalSound ("sound/misc/menu1.wav");
@@ -2792,6 +2797,9 @@ static void M_Reset_Key (int key, int ascii)
 {
 	switch (key)
 	{
+#ifdef __ANDROID__
+    case K_ENTER:
+#endif
 	case 'Y':
 	case 'y':
 		Cbuf_AddText ("cvar_resettodefaults_all;exec default.cfg\n");
@@ -3337,7 +3345,9 @@ static void M_Quit_Key (int key, int ascii)
 			m_state = m_none;
 		}
 		break;
-
+#ifdef __ANDROID__
+	case K_ENTER:
+#endif
 	case 'Y':
 	case 'y':
 		Host_Quit_f ();
