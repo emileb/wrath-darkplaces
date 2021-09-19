@@ -3163,17 +3163,25 @@ int R_PicmipForFlags(int flags)
 		miplevel += gl_picmip.integer;
 		if (flags & TEXF_ISWORLD)
 		{
+#ifdef __ANDROID__
+			miplevel += gl_picmip_world.integer;
+#else
 			if (r_picmipworld.integer)
 				miplevel += gl_picmip_world.integer;
 			else
 				miplevel = 0;
+#endif
 		}
 		else if (flags & TEXF_ISSPRITE)
 		{
+#ifdef __ANDROID__
+			miplevel += gl_picmip_sprites.integer;
+#else
 			if (r_picmipsprites.integer)
 				miplevel += gl_picmip_sprites.integer;
 			else
 				miplevel = 0;
+#endif
 		}
 		else
 			miplevel += gl_picmip_other.integer;
