@@ -55,6 +55,11 @@ extern kbutton_t	in_left, in_right, in_forward, in_back;
 extern kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack;
 extern kbutton_t	in_up, in_down;
+// LordHavoc: added 6 new buttons
+kbutton_t	in_button3, in_button4, in_button5, in_button6, in_button7, in_button8;
+//even more
+kbutton_t	in_button9, in_button10, in_button11, in_button12, in_button13, in_button14, in_button15, in_button16;
+
 
 static int scoresShown = 0;
 void PortableAction(int state, int action)
@@ -118,7 +123,7 @@ void PortableAction(int state, int action)
             (state)?KeyDownPort(&in_speed):KeyUpPort(&in_speed);
             break;
         case PORT_ACT_USE:
-            (state)?KeyDownPort(&in_use):KeyUpPort(&in_use);
+            (state)?KeyDownPort(&in_button5):KeyUpPort(&in_button5); // Use in_button5
             break;
         case PORT_ACT_JUMP:
             (state)?KeyDownPort(&in_jump):KeyUpPort(&in_jump);
@@ -130,7 +135,7 @@ void PortableAction(int state, int action)
             (state)?KeyDownPort(&in_up):KeyUpPort(&in_up);
             break;
         case PORT_ACT_DOWN:
-            (state)?KeyDownPort(&in_down):KeyUpPort(&in_down);
+            (state)?KeyDownPort(&in_button4):KeyUpPort(&in_button4); // Crouch in_button4
             break;
         case PORT_ACT_ALT_ATTACK:
         	MouseButton(state, BUTTON_SECONDARY);
@@ -183,18 +188,6 @@ void PortableAction(int state, int action)
             if (state)
                 PortableCommand("impulse 12\n");
             break;
-        case PORT_MALICE_USE:
-            if (state)
-                PortableCommand("impulse 13\n");
-            break;
-        case PORT_MALICE_RELOAD:
-            if (state)
-                PortableCommand("impulse 12\n");
-            break;
-        case PORT_MALICE_CYCLE:
-            if (state)
-                PortableCommand("impulse 14\n");
-            break;
         case PORT_ACT_QUICKSAVE:
             PortableKeyEvent( state, SDL_SCANCODE_F6, 0);
             break;
@@ -204,16 +197,6 @@ void PortableAction(int state, int action)
         case PORT_ACT_CONSOLE:
             if (state)
                 PortableCommand("toggleconsole");
-            break;
-        case PORT_ACT_MP_SCORES:
-            if(state)
-            {
-                if (scoresShown)
-                    PortableCommand("-showscores\n");
-                else
-                    PortableCommand("+showscores\n");
-                scoresShown = !scoresShown;
-            }
             break;
         }
 	}

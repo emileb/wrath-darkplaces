@@ -4507,6 +4507,13 @@ void Render_Init(void)
 	R_Explosion_Init();
 	R_LightningBeams_Init();
 	Mod_RenderInit();
+
+#ifdef __ANDROID__
+	Cvar_SetValue("r_nearclip", 1);
+	Cvar_SetValue("r_farclip_base", 65536);
+	Cvar_SetValue("r_farclip_world", 2);
+	Cvar_SetValue("r_useinfinitefarclip", 1);
+#endif
 }
 
 /*
@@ -7394,11 +7401,14 @@ void R_RenderView(void)
 
 	r_refdef.view.matrix = originalmatrix;
 #ifdef __ANDROID__ // Touch controls clear these, so ensure internal state is still valid. Was causing crash in qcore mod
-    GL_BindVBO(0);
-    GL_BindEBO(0);
-    GL_BindUBO(0);
-    GL_DepthTest(false);
-    GL_DepthMask(false);
+	void GL_BindVBO(int bufferobject);
+	void GL_BindEBO(int bufferobject);
+	void GL_BindUBO(int bufferobject);
+	GL_BindVBO(0);
+	GL_BindEBO(0);
+	GL_BindUBO(0);
+	GL_DepthTest(false);
+	GL_DepthMask(false);
 #endif
 	CHECKGLERROR
 }
