@@ -19,7 +19,6 @@ void PortableInit(int argc,const char ** argv)
 	com_argv = (const char **)argv;
 	Sys_ProvideSelfFD();
 
-	// we don't know which systems we'll want to init, yet...
 	SDL_Init(0);
 
 	Host_Main();
@@ -56,9 +55,9 @@ extern kbutton_t	in_lookup, in_lookdown, in_moveleft, in_moveright;
 extern kbutton_t	in_strafe, in_speed, in_use, in_jump, in_attack;
 extern kbutton_t	in_up, in_down;
 // LordHavoc: added 6 new buttons
-kbutton_t	in_button3, in_button4, in_button5, in_button6, in_button7, in_button8;
+extern kbutton_t	in_button3, in_button4, in_button5, in_button6, in_button7, in_button8;
 //even more
-kbutton_t	in_button9, in_button10, in_button11, in_button12, in_button13, in_button14, in_button15, in_button16;
+extern kbutton_t	in_button9, in_button10, in_button11, in_button12, in_button13, in_button14, in_button15, in_button16;
 
 
 static int scoresShown = 0;
@@ -129,7 +128,8 @@ void PortableAction(int state, int action)
             (state)?KeyDownPort(&in_jump):KeyUpPort(&in_jump);
             break;
         case PORT_ACT_ATTACK:
-            (state)?KeyDownPort(&in_attack):KeyUpPort(&in_attack);
+            //(state)?KeyDownPort(&in_attack):KeyUpPort(&in_attack);
+            MouseButton(state, BUTTON_PRIMARY); // Need to use mouse for in-game menus
             break;
         case PORT_ACT_UP:
             (state)?KeyDownPort(&in_up):KeyUpPort(&in_up);
@@ -138,7 +138,7 @@ void PortableAction(int state, int action)
             (state)?KeyDownPort(&in_button4):KeyUpPort(&in_button4); // Crouch in_button4
             break;
         case PORT_ACT_ALT_ATTACK:
-        	MouseButton(state, BUTTON_SECONDARY);
+            (state)?KeyDownPort(&in_button3):KeyUpPort(&in_button3);
             break;
         case PORT_ACT_WEAP1:
             if ( state )
@@ -174,25 +174,38 @@ void PortableAction(int state, int action)
             break;
 		case PORT_ACT_WEAP0:
 			if ( state )
-				PortableCommand("impulse 226\n");
+				PortableCommand("impulse 0\n");
 			break;
 		case PORT_ACT_WEAP9:
 			if ( state )
-				PortableCommand("impulse 225\n");
+				PortableCommand("impulse 9\n");
 			break;
         case PORT_ACT_NEXT_WEP:
             if (state)
-                PortableCommand("impulse 10\n");
+                PortableCommand("impulse 55\n");
             break;
         case PORT_ACT_PREV_WEP:
             if (state)
-                PortableCommand("impulse 12\n");
+                PortableCommand("impulse 56\n");
             break;
         case PORT_ACT_QUICKSAVE:
-            PortableKeyEvent( state, SDL_SCANCODE_F6, 0);
+            if (state)
+                PortableCommand("impulse 81\n");
             break;
         case PORT_ACT_QUICKLOAD:
-            PortableKeyEvent( state, SDL_SCANCODE_F9, 0);
+            if (state)
+                PortableCommand("impulse 89\n");
+            break;
+        case PORT_ACT_HELPCOMP: // Notebook
+            if (state)
+                PortableCommand("impulse 35\n");
+            break;
+        case PORT_ACT_INVEN: // Open runes
+            (state)?KeyDownPort(&in_button6):KeyUpPort(&in_button6);
+            break;
+        case PORT_ACT_INVUSE: // Use artifacts
+            if (state)
+                PortableCommand("impulse 15\n");
             break;
         case PORT_ACT_CONSOLE:
             if (state)
@@ -331,6 +344,11 @@ void IN_Move_Android( void )
 
     if( !blockLook )
     {
+        void MouseMove(float dx, float dy);
+        MouseMove(look_yaw_mouse * 4000, look_pitch_mouse * 2000);
+        look_pitch_mouse = 0;
+        look_yaw_mouse = 0;
+        /*
         cl.viewangles[0] -= look_pitch_mouse * 200;
         look_pitch_mouse = 0;
         cl.viewangles[0] += look_pitch_joy * 6 * (cl.realframetime * 1000.f / 16.f); // Presume was scaled at 60FPS
@@ -338,6 +356,8 @@ void IN_Move_Android( void )
         cl.viewangles[1] += look_yaw_mouse * 300;
         look_yaw_mouse = 0;
         cl.viewangles[1] += look_yaw_joy * 6 * (cl.realframetime * 1000.f / 16.f);
+         */
+
     }
 
 	if (cl.viewangles[0] > 80)
