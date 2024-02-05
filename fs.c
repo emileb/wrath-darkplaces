@@ -2006,6 +2006,11 @@ void FS_Init (void)
 	if((i = COM_CheckParm("-cddir")) && i < com_argc - 1)
 		dpsnprintf(fs_cddir, sizeof(fs_cddir), "%s/", com_argv[i+1]);
 #endif
+
+#ifdef __ANDROID__
+	extern const char *userFilesPath_c;
+	dpsnprintf(fs_userdir, sizeof(fs_userdir), "%s/wrath/", userFilesPath_c);
+#else
 	// Add the personal game directory
 	if((i = COM_CheckParm("-userdir")) && i < com_argc - 1)
 		dpsnprintf(fs_userdir, sizeof(fs_userdir), "%s/", com_argv[i+1]);
@@ -2054,7 +2059,7 @@ void FS_Init (void)
 		FS_ChooseUserDir((userdirmode_t)dirmode, fs_userdir, sizeof(fs_userdir));
 		Con_DPrintf("userdir %i is the winner\n", dirmode);
 	}
-
+#endif
 	// if userdir equal to basedir, clear it to avoid confusion later
 	if (!strcmp(fs_basedir, fs_userdir))
 		fs_userdir[0] = 0;
