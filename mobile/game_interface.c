@@ -86,6 +86,10 @@ void PortableAction(int state, int action)
             if (state)
                PortableCommand("toggleconsole");
         }
+        else if( action ==  PORT_ACT_ATTACK )
+        {
+            MouseButton(state, BUTTON_PRIMARY); // Need to use mouse for in-game menus
+        }
     }
     else
     {
@@ -348,6 +352,10 @@ void IN_Move_Android( void )
         MouseMove(look_yaw_mouse * 4000, look_pitch_mouse * 2000);
         look_pitch_mouse = 0;
         look_yaw_mouse = 0;
+
+        float joyMouseX = look_yaw_joy  * (cl.realframetime * 1000.f / 16.f);
+        float joyMouseY = -look_pitch_joy * (cl.realframetime * 1000.f / 16.f);
+        MouseMove(joyMouseX * 40, joyMouseY * 20);
         /*
         cl.viewangles[0] -= look_pitch_mouse * 200;
         look_pitch_mouse = 0;
