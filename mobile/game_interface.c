@@ -125,7 +125,7 @@ void PortableAction(int state, int action)
         case PORT_ACT_SPEED:
             (state)?KeyDownPort(&in_speed):KeyUpPort(&in_speed);
             break;
-        case PORT_ACT_USE:
+        case PORT_WRATH_USE:
             (state)?KeyDownPort(&in_button5):KeyUpPort(&in_button5); // Use in_button5
             break;
         case PORT_ACT_JUMP:
