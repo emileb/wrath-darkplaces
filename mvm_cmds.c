@@ -925,8 +925,9 @@ static void VM_M_stachievement_unlock(prvm_prog_t *prog)
 	const char *achID;
 	VM_SAFEPARMCOUNT(1, VM_M_stachievement_unlock);
 	achID = PRVM_G_STRING(OFS_PARM0);
-
+#ifndef __ANDROID__
 	Steam_AchievementUnlock(achID);
+#endif
 }
 
 static void VM_M_stachievement_query(prvm_prog_t *prog)
@@ -934,8 +935,9 @@ static void VM_M_stachievement_query(prvm_prog_t *prog)
 	const char *achID;
 	VM_SAFEPARMCOUNT(1, VM_M_stachievement_query);
 	achID = PRVM_G_STRING(OFS_PARM0);
-
+#ifndef __ANDROID__
 	Steam_AchievementQuery(achID);
+#endif
 }
 
 static void VM_M_ststat_setvalue(prvm_prog_t *prog)
@@ -945,8 +947,9 @@ static void VM_M_ststat_setvalue(prvm_prog_t *prog)
 	VM_SAFEPARMCOUNT(2, VM_M_ststat_setvalue);
 	statID = PRVM_G_STRING(OFS_PARM0);
 	statValue = PRVM_G_FLOAT(OFS_PARM1);
-
+#ifndef __ANDROID__
 	Steam_StatSet(statID, statValue);
+#endif
 }
 
 static void VM_M_ststat_increment(prvm_prog_t *prog)
@@ -956,8 +959,9 @@ static void VM_M_ststat_increment(prvm_prog_t *prog)
 	VM_SAFEPARMCOUNT(2, VM_M_ststat_increment);
 	statID = PRVM_G_STRING(OFS_PARM0);
 	statValue = PRVM_G_FLOAT(OFS_PARM1);
-
+#ifndef __ANDROID__
 	Steam_StatIncrement(statID, statValue);
+#endif
 }
 
 static void VM_M_ststat_query(prvm_prog_t *prog)
@@ -965,8 +969,9 @@ static void VM_M_ststat_query(prvm_prog_t *prog)
 	const char *statID;
 	VM_SAFEPARMCOUNT(1, VM_M_ststat_query);
 	statID = PRVM_G_STRING(OFS_PARM0);
-
+#ifndef __ANDROID__
 	Steam_StatQuery(statID);
+#endif
 }
 
 static void VM_M_stachievement_register(prvm_prog_t *prog)
@@ -974,8 +979,9 @@ static void VM_M_stachievement_register(prvm_prog_t *prog)
 	const char *achID;
 	VM_SAFEPARMCOUNT(1, VM_M_stachievement_register);
 	achID = PRVM_G_STRING(OFS_PARM0);
-
+#ifndef __ANDROID__
 	Steam_RegisterAchievement(achID);
+#endif
 }
 
 static void VM_M_ststat_register(prvm_prog_t *prog)
@@ -985,8 +991,9 @@ static void VM_M_ststat_register(prvm_prog_t *prog)
 	VM_SAFEPARMCOUNT(2, VM_M_ststat_register);
 	statID = PRVM_G_STRING(OFS_PARM0);
 	statType = (int)PRVM_G_FLOAT(OFS_PARM1);
-
+#ifndef __ANDROID__
 	Steam_RegisterStat(statID, statType);
+#endif
 }
 
 // EXT_CONTROLLER_REKI
@@ -995,8 +1002,9 @@ static void VM_M_controller_query(prvm_prog_t *prog)
 	int deviceIndex;
 	VM_SAFEPARMCOUNT(1, VM_M_controller_query);
 	deviceIndex = (int)PRVM_G_FLOAT(OFS_PARM0);
-
+#ifndef __ANDROID__
 	Controller_Poll(deviceIndex);
+#endif
 }
 
 static void VM_M_controller_rumble(prvm_prog_t *prog)

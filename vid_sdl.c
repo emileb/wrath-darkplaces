@@ -413,7 +413,7 @@ qboolean VID_ShowingKeyboard(void)
 
 void VID_SetMouse(qboolean fullscreengrab, qboolean relative, qboolean hidecursor)
 {
-#ifndef DP_MOBILETOUCH
+//#ifndef DP_MOBILETOUCH
 #ifdef MACOSX
 	if(relative)
 		if(vid_usingmouse && (vid_usingnoaccel != !!apple_mouse_noaccel.integer))
@@ -487,7 +487,7 @@ void VID_SetMouse(qboolean fullscreengrab, qboolean relative, qboolean hidecurso
 		vid_usinghidecursor = hidecursor;
 		SDL_ShowCursor( hidecursor ? SDL_DISABLE : SDL_ENABLE);
 	}
-#endif
+//#endif
 }
 
 // multitouch[10][] represents the mouse pointer
@@ -1071,6 +1071,10 @@ static void IN_Move_TouchScreen_Quake(void)
 	cl.viewangles[1] -= aim[0] * cl_yawspeed.value * cl.realframetime;
 }
 
+#ifdef __ANDROID__
+void IN_Move_Android( void );
+#endif
+
 void IN_Move( void )
 {
 	static int stuck = 0;
@@ -1135,7 +1139,9 @@ void IN_Move( void )
 		in_windowmouse_x = x;
 		in_windowmouse_y = y;
 	}
-
+#ifdef __ANDROID__
+    IN_Move_Android( );
+#endif
 	VID_BuildJoyState(&joystate);
 	VID_ApplyJoyState(&joystate);
 }
@@ -2152,7 +2158,7 @@ void VID_Init (void)
 #endif
 #endif
 #ifdef DP_MOBILETOUCH
-	Cvar_SetValueQuick(&vid_touchscreen, 1);
+	//Cvar_SetValueQuick(&vid_touchscreen, 1);
 #endif
 
 #ifdef SDL_R_RESTART
@@ -2706,7 +2712,9 @@ static qboolean VID_InitModeGL(viddef_mode_t *mode)
 		VID_Shutdown();
 		return false;
 	}
+#ifndef __ANDROID__ // Don't do this, keep the screen size passed in through the cmd line
 	SDL_GetWindowSize(window, &mode->width, &mode->height);
+#endif
 	context = SDL_GL_CreateContext(window);
 	if (context == NULL)
 	{
@@ -2728,6 +2736,12 @@ static qboolean VID_InitModeGL(viddef_mode_t *mode)
 
 #if SDL_MAJOR_VERSION != 1
 	SDL_GL_SetSwapInterval(vid_vsync.integer != 0);
+
+// Force this ON for Android, otherwise wierd stuttering on some devices (N 2013)
+#ifdef __ANDROID__
+	SDL_GL_SetSwapInterval(1);
+#endif
+
 	vid_usingvsync = (vid_vsync.integer != 0);
 #endif
 
@@ -2942,6 +2956,9 @@ int VID_GetGamma (unsigned short *ramps, int rampsize)
 
 controllertype_t VID_ControllerType(int index)
 {
+	return CONTROLLER_NULL;
+
+#if 0
 	#if SDL_ALLOW_XINPUT
 	index -= VID_Shared_SetJoystick(-1); // offset xinput devices
 	#endif
@@ -2960,6 +2977,7 @@ controllertype_t VID_ControllerType(int index)
 	else if (sdltype == SDL_CONTROLLER_TYPE_VIRTUAL)
 		return CONTROLLER_STEAM;
 	return CONTROLLER_GENERIC;
+#endif
 }
 
 void VID_ControllerRumble(int index, float lowf, float highf, int msec)
@@ -2993,7 +3011,9 @@ void VID_ControllerRumbleTriggers(int index, float leftf, float rightf, int msec
 
 	// we're just gonna ignore index... sorry :(, should fix that in the future!
 	SDL_GameController *controller = vid_sdlcontroller;
+#ifndef __ANDROID__
 	SDL_GameControllerRumbleTriggers(controller, (0xFFFF * leftf), (0xFFFF * rightf), msec);
+#endif
 }
 
 void VID_Finish (void)

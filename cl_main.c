@@ -1948,10 +1948,10 @@ void CL_UpdateWorld(void)
 
 		// decals, particles, and explosions will be updated during rneder
 	}
-
+#ifndef __ANDROID__
 	// Reki (May 4 2023): Run steam tick every render frame
 	Steam_Tick();
-
+#endif
 	r_refdef.scene.time = cl.time;
 }
 
@@ -2503,6 +2503,7 @@ void CL_Init (void)
 	CL_Screen_Init();
 
 	CL_Video_Init();
-
+#ifndef __ANDROID__
 	Steam_Startup();
+#endif
 }

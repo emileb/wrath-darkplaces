@@ -209,7 +209,11 @@ cvar_t r_bloom_colorexponent = {CVAR_SAVE, "r_bloom_colorexponent", "1", "how ex
 cvar_t r_bloom_colorsubtract = {CVAR_SAVE, "r_bloom_colorsubtract", "0.125", "reduces bloom colors by a certain amount"};
 cvar_t r_bloom_scenebrightness = {CVAR_SAVE, "r_bloom_scenebrightness", "1", "global rendering brightness when bloom is enabled"};
 
+#ifdef __ANDROID__ // Default needs to be brighter IMO
+cvar_t r_hdr_scenebrightness = {CVAR_SAVE, "r_hdr_scenebrightness", "2", "global rendering brightness"};
+#else
 cvar_t r_hdr_scenebrightness = {CVAR_SAVE, "r_hdr_scenebrightness", "1", "global rendering brightness"};
+#endif
 cvar_t r_hdr_glowintensity = {CVAR_SAVE, "r_hdr_glowintensity", "1", "how bright light emitting textures should appear"};
 cvar_t r_hdr_irisadaptation = {CVAR_SAVE, "r_hdr_irisadaptation", "0", "adjust scene brightness according to light intensity at player location"};
 cvar_t r_hdr_irisadaptation_multiplier = {CVAR_SAVE, "r_hdr_irisadaptation_multiplier", "2", "brightness at which value will be 1.0"};
@@ -1150,6 +1154,16 @@ static void R_GLSL_CompilePermutation(r_glsl_permutation_t *p, unsigned int mode
 	vertstrings_list[vertstrings_count++] = "#define VERTEX_SHADER\n";
 	geomstrings_list[geomstrings_count++] = "#define GEOMETRY_SHADER\n";
 	fragstrings_list[fragstrings_count++] = "#define FRAGMENT_SHADER\n";
+
+#if USE_GLES2
+	vertstrings_list[vertstrings_count++] = "precision highp int;\n";
+	geomstrings_list[geomstrings_count++] = "precision highp int;\n";
+	fragstrings_list[fragstrings_count++] = "precision highp int;\n";
+
+	vertstrings_list[vertstrings_count++] = "precision highp float;\n";
+	geomstrings_list[geomstrings_count++] = "precision highp float;\n";
+	fragstrings_list[fragstrings_count++] = "precision highp float;\n";
+#endif
 
 	// the second pretext is the mode (for example a light source)
 	vertstrings_list[vertstrings_count++] = modeinfo->pretext;
@@ -4473,10 +4487,10 @@ void GL_Main_Init(void)
 		Cvar_SetValue("r_fullbrights", 0);
 #ifdef DP_MOBILETOUCH
 	// GLES devices have terrible depth precision in general, so...
-	Cvar_SetValueQuick(&r_nearclip, 4);
-	Cvar_SetValueQuick(&r_farclip_base, 4096);
-	Cvar_SetValueQuick(&r_farclip_world, 0);
-	Cvar_SetValueQuick(&r_useinfinitefarclip, 0);
+	Cvar_SetValueQuick(&r_nearclip, 1);
+	Cvar_SetValueQuick(&r_farclip_base, 65536);
+	Cvar_SetValueQuick(&r_farclip_world, 2);
+	Cvar_SetValueQuick(&r_useinfinitefarclip, 1);
 #endif
 	R_RegisterModule("GL_Main", gl_main_start, gl_main_shutdown, gl_main_newmap, NULL, NULL);
 }
@@ -4496,6 +4510,13 @@ void Render_Init(void)
 	R_Explosion_Init();
 	R_LightningBeams_Init();
 	Mod_RenderInit();
+
+#ifdef __ANDROID__
+	Cvar_SetValue("r_nearclip", 1);
+	Cvar_SetValue("r_farclip_base", 65536);
+	Cvar_SetValue("r_farclip_world", 2);
+	Cvar_SetValue("r_useinfinitefarclip", 1);
+#endif
 }
 
 /*
@@ -7237,6 +7258,19 @@ static void R_SortEntities(void)
 	qsort(r_refdef.scene.entities, r_refdef.scene.numentities, sizeof(*r_refdef.scene.entities), R_SortEntities_Compare);
 }
 
+#ifdef __ANDROID__
+// The touch controls will change the GL program, this resets it
+void R_ResetProgram()
+{
+    if( r_glsl_permutation != NULL && r_glsl_permutation->program)
+	{
+        qglUseProgram(r_glsl_permutation->program);CHECKGLERROR
+	    if (r_glsl_permutation->loc_ModelViewProjectionMatrix >= 0) qglUniformMatrix4fv(r_glsl_permutation->loc_ModelViewProjectionMatrix, 1, false, gl_modelviewprojection16f);
+	    if (r_glsl_permutation->loc_ModelViewMatrix >= 0) qglUniformMatrix4fv(r_glsl_permutation->loc_ModelViewMatrix, 1, false, gl_modelview16f);
+	    if (r_glsl_permutation->loc_ClientTime >= 0) qglUniform1f(r_glsl_permutation->loc_ClientTime, cl.time);
+	}
+}
+#endif
 /*
 ================
 R_RenderView
@@ -7312,8 +7346,9 @@ void R_RenderView(void)
 
 	R_Shadow_UpdateWorldLightSelection();
 
+#ifndef __ANDROID__ // Has to be disabled to stop framebuffer being used which does not work
 	R_Bloom_StartFrame();
-
+#endif
 	// apply bloom brightness offset
 	if(r_fb.bloomtexture[0])
 		r_refdef.view.colorscale *= r_bloom_scenebrightness.value;
@@ -7368,7 +7403,16 @@ void R_RenderView(void)
 	GL_ScissorTest(false);
 
 	r_refdef.view.matrix = originalmatrix;
-
+#ifdef __ANDROID__ // Touch controls clear these, so ensure internal state is still valid. Was causing crash in qcore mod
+	void GL_BindVBO(int bufferobject);
+	void GL_BindEBO(int bufferobject);
+	void GL_BindUBO(int bufferobject);
+	GL_BindVBO(0);
+	GL_BindEBO(0);
+	GL_BindUBO(0);
+	GL_DepthTest(false);
+	GL_DepthMask(false);
+#endif
 	CHECKGLERROR
 }
 
