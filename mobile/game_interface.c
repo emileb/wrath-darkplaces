@@ -6,15 +6,19 @@
 #include "SDL_keycode.h"
 
 #include "SmartToggle.h"
+#include "CStringFifo.h"
 
 static float forwardmove, sidemove; //Joystick mode
 static float look_pitch_mouse,look_pitch_abs,look_pitch_joy;
 static float look_yaw_mouse,look_yaw_joy;
+static CStringFIFO m_CmdFifo;
 
 void Host_Main(void);
 void PortableInit(int argc,const char ** argv)
 {
 	LOGI("PortableInit");
+
+    cstr_fifo_init(&m_CmdFifo);
 
 	com_argc = argc;
 	com_argv = (const char **)argv;
@@ -228,15 +232,12 @@ void PortableAction(int state, int action)
 	}
 }
 
-static const char * quickCommand = 0;
 void PortableCommand(const char * cmd)
 {
-	static char cmdBuffer[256];
-	dpsnprintf(cmdBuffer, 256, "%s\n", cmd);
-	quickCommand = cmdBuffer;
+    static char cmdBuffer[256];
+    dpsnprintf(cmdBuffer, 256, "%s\n", cmd);
+    cstr_fifo_push(&m_CmdFifo, cmdBuffer);
 }
-
-
 
 extern	keydest_t	key_dest;
 touchscreemode_t PortableGetScreenMode()
@@ -329,6 +330,20 @@ void PortableLookYaw(int mode, float yaw)
 		break;
 	}
 }
+bool PortableSetAlwaysRun(bool run)
+{
+    if(run)
+    {
+        Cvar_SetValueQuick (&cl_forwardspeed, 400);
+        Cvar_SetValueQuick (&cl_backspeed, 400);
+    }
+    else
+    {
+        Cvar_SetValueQuick (&cl_forwardspeed, 200);
+        Cvar_SetValueQuick (&cl_backspeed, 200);
+    }
+    return false;
+}
 
 /////////////////////
 // Movement handling
@@ -337,12 +352,12 @@ void PortableLookYaw(int mode, float yaw)
 
 void IN_Move_Android( void )
 {
-	if (quickCommand)
-	{
-		LOGI("CMD = %s", quickCommand);
-		Cmd_ExecuteString(quickCommand, src_command, true);
-		quickCommand = 0;
-	}
+    char *consoleCmd;
+    while((consoleCmd = cstr_fifo_pop(&m_CmdFifo)))
+    {
+        Cmd_ExecuteString(consoleCmd, src_command, true);
+        free(consoleCmd);
+    }
 
     int blockGamepad( void );
     int blockMove = blockGamepad() & ANALOGUE_AXIS_FWD;
